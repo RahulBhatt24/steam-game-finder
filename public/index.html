@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameFinder</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+  .favorite-btn {
+    background-color: transparent;
+    border: none;
+    font-size: 18px;
+  }
+
+  .favorite-btn.favorited {
+    color: #f2a32d;
+  }
+  </style>
+</head>
+<body>
+  <h1>GameFinder</h1>
+  <button id="login-button" onclick="location.href='login.html'">Login / Signup</button>
+  <!-- <button id="add-pc-button" onclick="location.href='add_pc.html'">Add PC</button> -->
+
+  <script>
+    async function checkLoginStatus() {
+      const response = await fetch('/check-login-status');
+      const isLoggedIn = await response.json();
+
+      const loginButton = document.getElementById('login-button');
+      // const addPcButton = document.getElementById('add-pc-button');
+      if (isLoggedIn) {
+          loginButton.style.display = 'none';
+          // addPcButton.style.display = 'block';
+      } else {
+          loginButton.style.display = 'block';
+          // addPcButton.style.display = 'none';
+      }
+    }
+
+    checkLoginStatus();
+
+    async function editUser(row) {
+      const newEmail = prompt('Enter new email:', row.email);
+      const newPassword = prompt('Enter new password:', '');
+
+      if (newEmail && newPassword) {
+          const response = await fetch('/update-user', {
+              method: 'PUT',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ id: row.id, email: newEmail, password: newPassword }),
+          });
+
+          if (response.ok) {
+              location.reload();
+          } else {
+              alert('Error updating user');
+          }
+      }
+    }
+
+    async function deleteUser(userId) {
+        if (confirm('Are you sure you want to delete this user?')) {
+            const response = await fetch(`/delete-user/${userId}`, { method: 'DELETE' });
+
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error deleting user');
+            }
+        }
+    }
+
+
+  </script>
+  <h1>Search for a Game</h1>
+  <form id="search-form">
+      <input type="text" id="search-input" placeholder="Type game name..." />
+      <button type="submit">Search</button>
+  </form>
+  <table id="search-results">
+      <thead>
+          <tr>
+              <th>Name</th>
+              <th>Favorite</th>
+          </tr>
+      </thead>
+      <tbody>
+          <!-- Search results displayed here -->
+      </tbody>
+  </table>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchForm = document.querySelector('#search-form');
+      const searchInput = document.querySelector('#search-input');
+      const searchResults = document.querySelector('#search-results tbody');
+
+      searchForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const keyword = searchInput.value.trim();
+          if (keyword) {
+              searchGames(keyword);
+          }
+      });
+
+      async function searchGames(keyword) {
+        searchResults.innerHTML = '';
+        try {
+          const response = await fetch(`/search-games?keyword=${encodeURIComponent(keyword)}`);
+          const games = await response.json();
+          games.forEach((game) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${game.QueryName}</td>
+            <td>
+              <button class="favorite-btn" data-game-name="${game.QueryName}">⭐</button>
+            </td>`;
+          searchResults.appendChild(tr);
+          });
+
+          const favoriteButtons = document.querySelectorAll('.favorite-btn');
+          favoriteButtons.forEach((btn) => {
+            btn.addEventListener('click', async (e) => {
+              const gameName = e.target.dataset.gameName;
+              const response = await fetch(`/toggle-favorite`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ game_id: gameName }),
+              });
+
+              if (response.ok) {
+                e.target.classList.toggle('favorited');
+              } else {
+                alert('Error favoriting game');
+              }
+            });
+          });
+
+        } catch (error) {
+          console.error('Error fetching games:', error);
+        }
+      }
+  });
+
+  </script>
+    <h1>Highest Rated Steam Games</h1>
+  <table id="customers-table">
+    <thead>
+      <tr>
+        <!-- Add table headers based on your table columns -->
+        <th>Game</th>
+        <th>Game Rating</th>
+        <!-- <th>Email</th> -->
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <h1>Top Windows Games by Average Hours Played</h1>
+  <button id="sort-btn">Sort by Average Hours</button>
+  <table id="windows-games-table">
+    <thead>
+      <tr>
+        <th>Game</th>
+        <th>Average Hours</th>
+        <th>Windows Platform</th>
+      </tr>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <script>
+    // Add an event listener to the sort button
+    const sortBtn = document.querySelector('#sort-btn');
+    const wind = document.querySelector('#windows-games-table tbody');
+    let sortOrder = 1;
+
+    sortBtn.addEventListener('click', () => {
+      const rows = Array.from(wind.querySelectorAll('tr'));
+
+      rows.sort((a, b) => {
+        const aValue = parseFloat(a.children[1].textContent);
+        const bValue = parseFloat(b.children[1].textContent);
+        return sortOrder * (aValue - bValue);
+      });
+
+      wind.innerHTML = '';
+      rows.forEach(row => wind.appendChild(row));
+
+      // Toggle sortOrder for the next click
+      sortOrder = -sortOrder;
+    });
+</script>
+
+<h1>Best Value Games</h1>
+<table id="best-value-games-table">
+  <thead>
+    <tr>
+      <th>Game Name</th>
+      <th>Critic Score</th>
+      <th>Price</th>
+      <th>Popularity</th>
+      <th>Play Time</th>
+      <th>Favorite</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+<script>
+  const bestValueGamesTableBody = document.querySelector('#best-value-games-table tbody');
+
+fetch('/best-value-games')
+  .then(response => response.json())
+  .then(data => {
+    data.forEach(row => {
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+        <td>${row.game_name}</td>
+        <td>${row.critic_score}</td>
+        <td>${row.price.toFixed(2)}</td>
+        <td>${row.popularity}</td>
+        <td>${row.play_time}</td>
+        <td>${row.is_fave}</td>
+      `;
+
+      bestValueGamesTableBody.appendChild(tr);
+    });
+  })
+  .catch(error => {
+    console.error('Error fetching best value games data:', error);
+  });
+</script>
+
+<h1>GB Fan Favorites</h1>
+<table id="gb-fan-fave-table">
+  <thead>
+    <tr>
+      <th>Game ID</th>
+      <th>Game Name</th>
+      <th>Current</th>
+      <th>Price</th>
+      <th>Short Description</th>
+      <th>Create Date</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<script>
+  const gbFanFaveTableBody = document.querySelector('#gb-fan-fave-table tbody');
+
+  fetch('/gb-fan-fave')
+    .then(response => response.json())
+    .then(data => {
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${row.g_id}</td>
+          <td>${row.g_name}</td>
+          <td>${row.g_curr}</td>
+          <td>${row.g_price.toFixed(2)}</td>
+          <td>${row.g_short}</td>
+          <td>${new Date(row.create_date).toLocaleString()}</td>
+        `;
+
+        gbFanFaveTableBody.appendChild(tr);
+      });
+    })
+    .catch(error => {
+      console.error('Error fetching GB Fan Favorites data:', error);
+    });
+</script>
+
+
+<h1 id="users-header">Users</h1>
+    <table id="users-table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Password</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    
+
+  <script>
+    const tableBody = document.querySelector('#customers-table tbody');
+
+    fetch('/data')
+    .then(response => response.json())
+    .then(data => {
+        data.forEach(row => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${row.QueryName}</td>
+            <td>${row.avg_review_score.toFixed(4)}</td>
+        `;
+
+        tableBody.appendChild(tr);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching data:', error);
+    });
+
+    const windowsGamesTableBody = document.querySelector('#windows-games-table tbody');
+
+    fetch('/data2')
+    .then(response => response.json())
+    .then(data => {
+        data.forEach(row => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${row.Name}</td>
+            <td>${row.avg_hours.toFixed(2)}</td>
+            <td>${row.PlatformWindows ? 'Yes' : 'No'}</td>
+        `;
+
+        windowsGamesTableBody.appendChild(tr);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching data:', error);
+    });
+
+    const usersTableBody = document.querySelector('#users-table tbody');
+    fetch('/data3')
+    .then(response => response.json())
+    .then(data => {
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+
+            // Create Edit button
+            const editButton = document.createElement('button');
+            editButton.textContent = 'Edit';
+            editButton.addEventListener('click', () => editUser(row));
+
+            // Create Delete button
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', () => deleteUser(row.id));
+
+            tr.innerHTML = `
+                <td>${row.email}</td>
+                <td>${row.password_hash}</td>
+                <td></td>
+                <td></td>
+            `;
+            tr.children[2].appendChild(editButton);
+            tr.children[3].appendChild(deleteButton);
+
+            usersTableBody.appendChild(tr);
+        });
+    })
+    .catch(error => {
+        console.error('Error fetching data:', error);
+    });
+
+    async function checkMaster() {
+      const response = await fetch('/is-user-master');
+      const isMaster = await response.json();
+      console.log(isMaster)
+
+      const usersTable = document.getElementById('users-table');
+      const userHeader = document.getElementById('users-header');
+      if (!isMaster) {
+        usersTable.style.display = 'none';
+        userHeader.style.display = 'none';
+      }
+    }
+
+    checkMaster();
+
+  </script>
+</body>
+</html>
