@@ -1,17 +1,3 @@
-# sp23-cs411-team057-NYRN
+# GameFinder
 
-This is a template for CS411 project repository. Please make sure that your title follows the convention: [TeamID]-[YourTeamName]. All TeamID should have a three digit coding (i.e. if you are team 20, you should have `team020` as your ID.). You should also make sure that your url for this repository is [sp23-cs411-team000-teamname.git] so TAs can correctly clone your repository and keep them up-to-date.
-
-Once you setup your project, please remember to submit your team formation to the team form.
-
-## Permission
-You should make sure you allow TAs to access your repository. You can add TA(s) as a collaborator to your repository.
-
-## Preparing for your release
-Each submission should be in it's own [release](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases). Release are specific freezes to your repository. You should submit your commit hash on canvas or google sheet. When tagging your stage, please use the tag `stage.x` where x is the number to represent the stage.
-
-## Keeping things up-to-date
-You should make sure you keep your project root files up-to-date. Information for each file/folders are explained.
-
-## Code Contribution
-Individual code contribution will be used to evaluate individual contribution to the project.
+GameFinder is designed to help users find the perfect game for their preferences and computer specifications. With GameFinder, users can input specific characteristics they are looking for in a game, such as genre, setting, or playstyle, and their computer specs, such as graphics card and RAM. The search engine will then generate a catalog of games that match the user's criteria, ensuring that they find a game that not only fits their interests but also runs smoothly on their computer. Whether you're looking for a fast-paced action game or a relaxing puzzle game, GameFinder has you covered. Say goodbye to endless scrolling through game listings and hello to a tailored, efficient search experience. It’s always game time. 
